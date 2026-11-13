@@ -56,3 +56,4 @@ public class SettingsManager : MonoBehaviour
 
     }
 }
+string serverUrl = ServerConfig.baseURL;
