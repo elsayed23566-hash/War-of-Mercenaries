@@ -625,8 +625,8 @@ public class SaveManager : MonoBehaviour
 
         string updatedJson = JsonUtility.ToJson(currentSave, true);
         File.WriteAllText(saveFilePath, updatedJson);
-    }
-
+        StartCoroutine(SendSaveToServer(updatedJson));
+    }  
     public void LoadAudioAndFPSOnly()
     {
         if (!File.Exists(saveFilePath)) return;
