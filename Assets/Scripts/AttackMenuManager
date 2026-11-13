@@ -1,0 +1,36 @@
+using System.Collections;
+using UnityEngine;
+using UnityEngine.Networking;
+
+public class AttackMenuManager : MonoBehaviour
+{
+    public NetworkManager networkManager; // اسحب مرجع الـ NetworkManager هنا في التفتيش (Inspector)
+
+    // دالة بتتفعل أول ما تفتح شاشة البحث عن خصوم أو تضغط زرار "هجوم"
+    public void OnOpenAttackMenu()
+    {
+        StartCoroutine(FetchAndDisplayPlayers());
+    }
+
+    IEnumerator FetchAndDisplayPlayers()
+    {
+        yield return StartCoroutine(networkManager.GetPlayersList((jsonResponse) => {
+            if (!string.IsNullOrEmpty(jsonResponse))
+            {
+                Debug.Log("Players List Received: " + jsonResponse);
+                // هنا هتقوم بتحويل الـ JSON لـ List وتعرضهم على الـ UI (زرار لكل لاعب)
+                ProcessPlayersJson(jsonResponse);
+            }
+            else
+            {
+                Debug.LogError("Could not load players list from server.");
+            }
+        }));
+    }
+
+    void ProcessPlayersJson(string json)
+    {
+        // خطوة تحليل البيانات وعرض أسماء اللاعبين ومستوياتهم على الأزرار في الشاشة
+        // مثال: Player 1, Player 2... وكل زرار عليه الـ ID بتاعه عشان لو دوست عليه يهجم عليه
+    }
+}
