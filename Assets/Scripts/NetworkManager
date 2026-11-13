@@ -1,0 +1,73 @@
+using System.Collections;
+using UnityEngine;
+using UnityEngine.Networking;
+
+public class NetworkManager : MonoBehaviour
+{
+    // رابط السيرفر بتاعك على Railway اللي أخبرتنا عنه
+    private string serverUrl = "https://my-game-server-production-fb37.up.railway.app";
+
+    // 1. دالة لرفع وحفظ بيانات قريتك على السيرفر
+    public IEnumerator SaveVillageToServer(string playerId, string playerName, int playerLevel, string villageJsonData)
+    {
+        string url = serverUrl + "/api/save-village";
+        
+        // تجهيز البيانات في شكل JSON هيبعتها السيرفر
+        string jsonBody = JsonUtility.ToJson(new VillagePayload {
+            playerId = playerId,
+            playerName = playerName,
+            playerLevel = playerLevel,
+            villageData = villageJsonData
+        });
+
+        using (UnityWebRequest request = new UnityWebRequest(url, "POST"))
+        {
+            byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(jsonBody);
+            request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+            request.downloadHandler = new DownloadHandlerBuffer();
+            request.SetRequestHeader("Content-Type", "application/json");
+
+            yield return request.SendWebRequest();
+
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                Debug.Log("Village successfully synced with server!");
+            }
+            else
+            {
+                Debug.LogError("Failed to save village: " + request.error);
+            }
+        }
+    }
+
+    // 2. دالة لجلب لستة اللاعبين الآخرين (عشان تختار مين تهجم عليه)
+    public IEnumerator GetPlayersList(System.Action<string> onCallback)
+    {
+        string url = serverUrl + "/api/players-list";
+
+        using (UnityWebRequest request = UnityWebRequest.Get(url))
+        {
+            yield return request.SendWebRequest();
+
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                string jsonResponse = request.downloadHandler.text;
+                onCallback?.Invoke(jsonResponse); // رجعنا اللستة عشان نعرضها في اللعبة
+            }
+            else
+            {
+                Debug.LogError("Failed to get players list: " + request.error);
+                onCallback?.Invoke(null);
+            }
+        }
+    }
+}
+
+[System.Serializable]
+public class VillagePayload
+{
+    public string playerId;
+    public string playerName;
+    public int playerLevel;
+    public string villageData;
+}
