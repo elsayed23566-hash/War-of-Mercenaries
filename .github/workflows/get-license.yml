@@ -1,0 +1,25 @@
+name: Auto Get Unity License
+on:
+  workflow_dispatch: {}
+
+jobs:
+  get-license:
+    name: Generate Personal License
+    runs-on: ubuntu-latest
+    steps:
+      - name: Activate Unity License
+        id: activate
+        uses: game-ci/unity-activate@v1
+        with:
+          unity-username: ${{ secrets.UNITY_EMAIL }}
+          unity-password: ${{ secrets.UNITY_PASSWORD }}
+
+      - name: Save License File
+        run: |
+          echo "${{ steps.activate.outputs.unity-license }}" > Unity_lic.ulf
+
+      - name: Upload License Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Unity-License-File
+          path: Unity_lic.ulf
