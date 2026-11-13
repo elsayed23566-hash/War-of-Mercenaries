@@ -1,45 +1,49 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.UI; // مهم عشان نقدر نتعامل مع الأزرار والـ UI
+using UnityEngine.UI;
 
 public class AttackMenuManager : MonoBehaviour
 {
-    public NetworkManager networkManager; 
-    public Transform contentParent; // الـ Content اللي جوه الـ Scroll View اللي هتحط فيه الأزرار
-    public GameObject playerButtonPrefab; // بريفاب زرار اللاعب اللي هيتكرر
+    [Header("References")]
+    public NetworkManager networkManager; // اسحب مرجع الـ NetworkManager هنا من الـ Inspector
+    public Button attackButton;           // زرار الهجوم في الواجهة
 
-    public void OnOpenAttackMenu()
+    void Start()
     {
-        StartCoroutine(FetchPlayers());
+        // ربط الزرار تلقائياً بالدالة أول ما اللعبة تبدأ
+        if (attackButton != null)
+        {
+            attackButton.onClick.AddListener(OnAttackButtonClicked);
+        }
     }
 
-    IEnumerator FetchPlayers()
+    // الدالة دي بتشتغل لما اللاعب يضغط على زرار الهجوم
+    public void OnAttackButtonClicked()
     {
+        Debug.Log("جاري البحث عن خصوم من السيرفر...");
+        StartCoroutine(FetchAndShowPlayers());
+    }
+
+    IEnumerator FetchAndShowPlayers()
+    {
+        // استدعاء دالة جلب اللاعبين من الـ NetworkManager
         yield return StartCoroutine(networkManager.GetPlayersList((jsonResponse) => {
             if (!string.IsNullOrEmpty(jsonResponse))
             {
-                Debug.Log("تم استلام قائمة اللاعبين بنجاح: " + jsonResponse);
+                Debug.Log("تم استقبال قائمة اللاعبين بنجاح: " + jsonResponse);
                 
-                // تفريغ الأزرار القديمة لو موجودة
-                foreach (Transform child in contentParent) {
-                    Destroy(child.gameObject);
-                }
-
-                // تحليل الـ JSON (هنستخدم مكتبة سريعة أو طريقة Unity لفك الـ JSON)
-                // هنا بنعرض اللاعبين كأزرار
-                ProcessAndSpawnButtons(jsonResponse);
+                // تحليل بيانات اللاعبين وعرضها على الشاشة
+                ProcessPlayersData(jsonResponse);
             }
             else
             {
-                Debug.LogError("فشل في تحميل قائمة اللاعبين من السيرفر.");
+                Debug.LogError("فشل الاتصال بالسيرفر أو القائمة فارغة.");
             }
         }));
     }
 
-    void ProcessAndSpawnButtons(string jsonArray)
+    void ProcessPlayersData(string json)
     {
-        // بما أن الـ JSON جاي على شكل مصفوفة [ {playerId, playerName, playerLevel}, ... ]
-        // هنبسط تحليلها باستخدام JsonUtility عن طريق عمل Wrapper كلاس لو حبيت،
-        // أو هنعرضهم مباشرة. قولي لو جاهز نعمل كلاس الـ Wrapper الخاص بالـ List!
+        // هنا هتعرض الداتا أو الأزرار لكل لاعب راجع من السيرفر
     }
 }
