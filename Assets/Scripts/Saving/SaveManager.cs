@@ -683,6 +683,26 @@ public class SaveManager : MonoBehaviour
     //{
     //    if (pauseStatus)
     //    {
+    // دالة مخصصة لرفع ملف الحفظ إلى سيرفر Railway أوتوماتيكياً
+    private System.Collections.IEnumerator SendSaveToServer(string jsonData)
+    {
+        string url = ServerConfig.baseURL + "/api/save";
+
+        using (UnityEngine.Networking.UnityWebRequest www = UnityEngine.Networking.UnityWebRequest.Post(url, jsonData))
+        {
+            www.SetRequestHeader("Content-Type", "application/json");
+            yield return www.SendWebRequest();
+
+            if (www.result != UnityEngine.Networking.UnityWebRequest.Result.Success)
+            {
+                UnityEngine.Debug.LogError("خطأ في رفع الحفظ للسيرفر: " + www.error);
+            }
+            else
+            {
+                UnityEngine.Debug.Log("تم رفع بيانات القرية بنجاح إلى سيرفر Railway!");
+            }
+        }
+    }
     //        HandleAutoSave();
     //    }
     //}
