@@ -1,49 +1,71 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class AttackMenuManager : MonoBehaviour
 {
     [Header("References")]
-    public NetworkManager networkManager; // اسحب مرجع الـ NetworkManager هنا من الـ Inspector
-    public Button attackButton;           // زرار الهجوم في الواجهة
+    public NetworkManager networkManager; // هنسحب NetworkManager من الـ Inspector
+    public Button attackButton; // زر الهجوم في الواجهة
+    
+    [Header("UI List Settings")]
+    public Transform contentParent; // مكان الـ Content جوه الـ Scroll View
+    public GameObject villageButtonPrefab; // قالب الزرار اللي هيتكرر لكل لاعب
 
     void Start()
     {
-        // ربط الزرار تلقائياً بالدالة أول ما اللعبة تبدأ
+        // ربط الزرار تلقائياً اول ما اللعبة تبدأ //
         if (attackButton != null)
         {
             attackButton.onClick.AddListener(OnAttackButtonClicked);
         }
     }
 
-    // الدالة دي بتشتغل لما اللاعب يضغط على زرار الهجوم
+    // الدالة دي بتشتغل لما اللاعب يضغط على زرار الهجوم //
     public void OnAttackButtonClicked()
     {
-        Debug.Log("جاري البحث عن خصوم من السيرفر...");
+        Debug.Log("جاري البحث عن هجوم من السيرفر...");
         StartCoroutine(FetchAndShowPlayers());
     }
 
     IEnumerator FetchAndShowPlayers()
     {
-        // استدعاء دالة جلب اللاعبين من الـ NetworkManager
-        yield return StartCoroutine(networkManager.GetPlayersList((jsonResponse) => {
+        // استدعاء دالة جلب اللاعبين من الـ NetworkManager //
+        yield return StartCoroutine(networkManager.GotPlayersList(jsonResponse => 
+        {
             if (!string.IsNullOrEmpty(jsonResponse))
             {
                 Debug.Log("تم استقبال قائمة اللاعبين بنجاح: " + jsonResponse);
                 
-                // تحليل بيانات اللاعبين وعرضها على الشاشة
+                // تحليل بيانات اللاعبين وعرضها على الشاشة //
                 ProcessPlayersData(jsonResponse);
             }
             else
             {
-                Debug.LogError("فشل الاتصال بالسيرفر أو القائمة فارغة.");
+                Debug.LogError("فشل الاتصال بالسيرفر أو القائمة فارغة!");
             }
         }));
     }
 
     void ProcessPlayersData(string json)
     {
-        // هنا هتعرض الداتا أو الأزرار لكل لاعب راجع من السيرفر
+        // مسح القائمة القديمة قبل إضافة الجديد عشان ميتكرروش //
+        foreach (Transform child in contentParent)
+        {
+            Destroy(child.gameObject);
+        }
+
+        // هنا هنفترض إن السيرفر رجع لستة، هنعمل زرار وهمي أو حقيقي لكل لاعب مؤقتاً لحد ما نربط الـ JSON بدقة
+        // كمثال توضيحي لتوليد الأزرار ديناميكياً:
+        if (villageButtonPrefab != null && contentParent != null)
+        {
+            GameObject newButton = Instantiate(villageButtonPrefab, contentParent);
+            Text btnText = newButton.GetComponentInChildren<Text>();
+            if (btnText != null)
+            {
+                btnText.text = "قرية لاعب (جاهزة للهجوم)";
+            }
+        }
     }
 }
