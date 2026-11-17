@@ -4,10 +4,29 @@ using UnityEngine;
 public class GameInitializer : MonoBehaviour
 {
     public NetworkManager networkManager;
+    [Header("UI / Warnings")]
+    public GameObject noInternetPanel; // لو حابب تربط شاشة تنبيه إن مفيش نت من الـ Inspector
 
     void Start()
     {
-        // بيانات تجريبية مؤقتة لقريتك (تقدر تغيرها بالأسماء الحقيقية للملفات لاحقاً)
+        // فحص حالة الاتصال بالإنترنت فور فتح اللعبة
+        if (Application.internetReachability == NetworkReachability.NotReachable)
+        {
+            Debug.LogError("لا يوجد اتصال بالإنترنت! اللعبة تتطلب اتصالاً بالإنترنت لتعمل.");
+
+            // إظهار لوحة التنبيه إن وجدت
+            if (noInternetPanel != null)
+            {
+                noInternetPanel.SetActive(true);
+            }
+
+            // لو عايز تقفل اللعبة تماماً لو مفيش نت، شيل العلامة من السطر اللي تحت:
+            // Application.Quit();
+            
+            return; // وقف تنفيذ الكود وماتكملش تسجيل القرية
+        }
+
+        // لو فيه إنترنت، كمل تسجيل القرية بشكل طبيعي
         string myPlayerId = "player_" + Random.Range(1000, 9999); // رقم تعريفي مؤقت فريد
         string myPlayerName = "HeroVillage"; // اسم قريتك
         int myLevel = 1;                     // مستوى قريتك
