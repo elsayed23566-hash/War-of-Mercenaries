@@ -1,41 +1,91 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GameInitializer : MonoBehaviour
 {
     public NetworkManager networkManager;
+
     [Header("UI / Warnings")]
-    public GameObject noInternetPanel; // لو حابب تربط شاشة تنبيه إن مفيش نت من الـ Inspector
+    public GameObject noInternetPanel; // لوحة تنبيه إن مفيش نت
+    
+    [Header("Login / Account Linking")]
+    public GameObject loginPanel;      // لوحة تسجيل الدخول لو الحساب مش مربوط
+    public InputField emailInputField; // مكان كتابة الإيميل أو اسم الحساب
+    public Button saveAccountButton;   // زرار تأكيد الربط
 
     void Start()
     {
-        // فحص حالة الاتصال بالإنترنت فور فتح اللعبة
+        // فحص حالة الاتصال بالإنترنت أولاً
         if (Application.internetReachability == NetworkReachability.NotReachable)
         {
             Debug.LogError("لا يوجد اتصال بالإنترنت! اللعبة تتطلب اتصالاً بالإنترنت لتعمل.");
 
-            // إظهار لوحة التنبيه إن وجدت
             if (noInternetPanel != null)
             {
                 noInternetPanel.SetActive(true);
             }
-
-            // لو عايز تقفل اللعبة تماماً لو مفيش نت، شيل العلامة من السطر اللي تحت:
-            // Application.Quit();
-            
-            return; // وقف تنفيذ الكود وماتكملش تسجيل القرية
+            return;
         }
 
-        // لو فيه إنترنت، كمل تسجيل القرية بشكل طبيعي
-        string myPlayerId = "player_" + Random.Range(1000, 9999); // رقم تعريفي مؤقت فريد
-        string myPlayerName = "HeroVillage"; // اسم قريتك
-        int myLevel = 1;                     // مستوى قريتك
-        string sampleVillageData = "DefaultLayout"; // داتا مبدئية عن شكل المباني
+        // التأكد هل اللاعب مسجل حسابه من قبل على جهازه ولا لأ؟
+        string savedEmail = PlayerPrefs.GetString("PlayerEmail", "");
 
-        // التأكد من وجود NetworkManager والاستدعاء
+        if (string.IsNullOrEmpty(savedEmail))
+        {
+            // لو أول مرة، نظهر شاشة إدخال الإيميل ونفعل زرار الربط
+            if (loginPanel != null) 
+            {
+                loginPanel.SetActive(true);
+            }
+
+            if (saveAccountButton != null)
+            {
+                saveAccountButton.onClick.AddListener(RegisterNewAccount);
+            }
+        }
+        else
+        {
+            // لو الحساب مسجل ومحفوظ مسبقاً، نسجل الدخول ونبعت بياناته مباشرة للسيرفر
+            StartAccountSession(savedEmail);
+        }
+    }
+
+    void RegisterNewAccount()
+    {
+        if (emailInputField != null && !string.IsNullOrEmpty(emailInputField.text))
+        {
+            string userEmail = emailInputField.text;
+
+            // حفظ الإيميل أو المعرف على الجهاز بشكل دائم
+            PlayerPrefs.SetString("PlayerEmail", userEmail);
+            PlayerPrefs.Save();
+
+            // إخفاء شاشة تسجيل الدخول
+            if (loginPanel != null) 
+            {
+                loginPanel.SetActive(false);
+            }
+
+            // البدء في إرسال البيانات للسيرفر
+            StartAccountSession(userEmail);
+            Debug.Log("تم ربط الحساب بنجاح: " + userEmail);
+        }
+        else
+        {
+            Debug.LogWarning("من فضلك أدخل بريداً إلكترونياً أو اسماً صحيحاً للحساب!");
+        }
+    }
+
+    void StartAccountSession(string accountId)
+    {
+        string playerName = accountId; // استخدام البريد كاسم للقرية مؤقتاً أو تعديله حسب رغبتك
+        int playerLevel = 1;
+        string sampleVillageData = "DefaultLayout";
+
         if (networkManager != null)
         {
-            StartCoroutine(networkManager.SaveVillageToServer(myPlayerId, myPlayerName, myLevel, sampleVillageData));
+            StartCoroutine(networkManager.SaveVillageToServer(accountId, playerName, playerLevel, sampleVillageData));
         }
         else
         {
