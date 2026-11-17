@@ -2,43 +2,43 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class AttackMenuManager : MonoBehaviour
 {
     [Header("References")]
-    public NetworkManager networkManager; // هنسحب NetworkManager من الـ Inspector //
-    public Button attackButton; // زر الهجوم في الواجهة //
+    public NetworkManager networkManager; // مسحب NetworkManager من Inspector
+    public Button attackButton; // زر الهجوم في القائمة
 
     [Header("UI List Settings")]
-    public Transform contentParent; // مكان الـ Content جوه الـ Scroll View //
-    public GameObject villageButtonPrefab; // قالب الزرار اللي هيتكرر لكل لاعب //
+    public Transform contentParent; // مكان الـ Content جوه Scroll View
+    public GameObject villageButtonPrefab; // قالب الزرار اللي هيتكرر لكل لاعب
 
     void Start()
     {
-        // ربط الزرار تلقائياً اول ما اللعبة تبدأ //
+        // ربط الزرار تلقائيا أول ما القائمة تبدأ
         if (attackButton != null)
         {
             attackButton.onClick.AddListener(OnAttackButtonClicked);
         }
     }
 
-    // الدالة دي بتشتغل لما اللاعب يضغط على زرار الهجوم //
+    // الدالة دي بتشتغل لما اللاعب يضغط علي زرار الهجوم
     public void OnAttackButtonClicked()
     {
-        Debug.Log("جاري البحث عن هجوم من السيرفر...");
+        Debug.Log("...جاري البحث عن هجوم من السيرفر");
         StartCoroutine(FetchAndShowPlayers());
     }
 
     IEnumerator FetchAndShowPlayers()
     {
-        // استدعاء دالة جلب اللاعبين من الـ NetworkManager //
-        yield return StartCoroutine(networkManager.GotPlayersList(jsonResponse => 
+        // استدعاء دالة جلب اللاعبين من NetworkManager
+        yield return StartCoroutine(networkManager.GetPlayerslist(jsonResponse =>
         {
             if (!string.IsNullOrEmpty(jsonResponse))
             {
                 Debug.Log("تم استقبال قائمة اللاعبين بنجاح: " + jsonResponse);
-                
-                // تحليل بيانات اللاعبين وعرضها على الشاشة //
+                // تحليل بيانات اللاعبين وعرضها على الشاشة
                 ProcessPlayersData(jsonResponse);
             }
             else
@@ -50,13 +50,13 @@ public class AttackMenuManager : MonoBehaviour
 
     void ProcessPlayersData(string json)
     {
-        // مسح القائمة القديمة قبل إضافة الجديد عشان ميتكرروش //
+        // مسح القائمة القديمة قبل إضافة الجديد عشان ميتكرروش
         foreach (Transform child in contentParent)
         {
             Destroy(child.gameObject);
         }
 
-        // ترجمة وتحليل بيانات الـ JSON القادمة من السيرفر وعرض الأزرار ديناميكياً //
+        // القادمة من السيرفر وعرض الأزرار ديناميكياً وتعديل بيانات الـ UI
         string wrappedJson = "{\"players\":" + json + "}";
         PlayerListWrapper dataList = JsonUtility.FromJson<PlayerListWrapper>(wrappedJson);
 
@@ -72,14 +72,38 @@ public class AttackMenuManager : MonoBehaviour
                     {
                         btnText.text = player.name + " (هجوم)";
                     }
+
+                    // تفعيل الضغط على زرار اللاعب المحدد لهجوم فردي
+                    Button btnComponent = newButton.GetComponent<Button>();
+                    if (btnComponent != null)
+                    {
+                        PlayerData clickedPlayer = player; // حفظ نسخة متغيرة للاستخدام في الحدث
+                        btnComponent.onClick.AddListener(() =>
+                        {
+                            OnPlayerSelectedForAttack(clickedPlayer);
+                        });
+                    }
                 }
             }
-            Debug.Log("تم توليد أزرار القرى بنجاح بعدد: " + dataList.players.Count);
+            Debug.Log("تم توليد أزرار القرى بنجاح: " + dataList.players.Count);
         }
+    }
+
+    // دالة عند اختيار قرية لاعب معين للهجوم عليه
+    void OnPlayerSelectedForAttack(PlayerData targetPlayer)
+    {
+        Debug.Log("تم اختيار اللاعب للهجوم: " + targetPlayer.name);
+
+        // تخزين بيانات الهدف لنقلها لشاشة المعركة
+        PlayerPrefs.SetString("TargetPlayerId", targetPlayer.id);
+        PlayerPrefs.SetString("TargetPlayerName", targetPlayer.name);
+        PlayerPrefs.Save();
+
+        // الانتقال لمشهد المعركة (BattleScene)
+        SceneManager.LoadScene("BattleScene");
     }
 }
 
-// الكلاسات المساعدة لترجمة بيانات الـ JSON
 [System.Serializable]
 public class PlayerData
 {
