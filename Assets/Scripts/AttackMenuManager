@@ -6,12 +6,12 @@ using UnityEngine.UI;
 public class AttackMenuManager : MonoBehaviour
 {
     [Header("References")]
-    public NetworkManager networkManager; // هنسحب NetworkManager من الـ Inspector
-    public Button attackButton; // زر الهجوم في الواجهة
-    
+    public NetworkManager networkManager; // هنسحب NetworkManager من الـ Inspector //
+    public Button attackButton; // زر الهجوم في الواجهة //
+
     [Header("UI List Settings")]
-    public Transform contentParent; // مكان الـ Content جوه الـ Scroll View
-    public GameObject villageButtonPrefab; // قالب الزرار اللي هيتكرر لكل لاعب
+    public Transform contentParent; // مكان الـ Content جوه الـ Scroll View //
+    public GameObject villageButtonPrefab; // قالب الزرار اللي هيتكرر لكل لاعب //
 
     void Start()
     {
@@ -56,16 +56,39 @@ public class AttackMenuManager : MonoBehaviour
             Destroy(child.gameObject);
         }
 
-        // هنا هنفترض إن السيرفر رجع لستة، هنعمل زرار وهمي أو حقيقي لكل لاعب مؤقتاً لحد ما نربط الـ JSON بدقة
-        // كمثال توضيحي لتوليد الأزرار ديناميكياً:
-        if (villageButtonPrefab != null && contentParent != null)
+        // ترجمة وتحليل بيانات الـ JSON القادمة من السيرفر وعرض الأزرار ديناميكياً //
+        string wrappedJson = "{\"players\":" + json + "}";
+        PlayerListWrapper dataList = JsonUtility.FromJson<PlayerListWrapper>(wrappedJson);
+
+        if (dataList != null && dataList.players != null)
         {
-            GameObject newButton = Instantiate(villageButtonPrefab, contentParent);
-            Text btnText = newButton.GetComponentInChildren<Text>();
-            if (btnText != null)
+            foreach (PlayerData player in dataList.players)
             {
-                btnText.text = "قرية لاعب (جاهزة للهجوم)";
+                if (villageButtonPrefab != null && contentParent != null)
+                {
+                    GameObject newButton = Instantiate(villageButtonPrefab, contentParent);
+                    Text btnText = newButton.GetComponentInChildren<Text>();
+                    if (btnText != null)
+                    {
+                        btnText.text = player.name + " (هجوم)";
+                    }
+                }
             }
+            Debug.Log("تم توليد أزرار القرى بنجاح بعدد: " + dataList.players.Count);
         }
     }
+}
+
+// الكلاسات المساعدة لترجمة بيانات الـ JSON
+[System.Serializable]
+public class PlayerData
+{
+    public string id;
+    public string name;
+}
+
+[System.Serializable]
+public class PlayerListWrapper
+{
+    public List<PlayerData> players;
 }
