@@ -1,18 +1,17 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 
 public class NetworkManager : MonoBehaviour
 {
-    // رابط السيرفر بتاعك على Railway اللي أخبرتنا عنه
-    private string serverUrl = "https://my-game-server-production-fb37.up.railway.app";
-
-    // 1. دالة لرفع وحفظ بيانات قريتك على السيرفر
+    // 1. الدالة لرفع وحفظ بيانات قريتك على السيرفر
     public IEnumerator SaveVillageToServer(string playerId, string playerName, int playerLevel, string villageJsonData)
     {
-        string url = serverUrl + "/api/save-village";
-        
-        // تجهيز البيانات في شكل JSON هيبعتها السيرفر
+        // استخدام الرابط الأساسي من ServerConfig بدلاً من الكتابة الثابتة
+        string url = ServerConfig.baseURI + "/api/save-village";
+
+        // هنيجي هنا نجهز JSON للبيانات بالشكل ده
         string jsonBody = JsonUtility.ToJson(new VillagePayload {
             playerId = playerId,
             playerName = playerName,
@@ -40,10 +39,10 @@ public class NetworkManager : MonoBehaviour
         }
     }
 
-    // 2. دالة لجلب لستة اللاعبين الآخرين (عشان تختار مين تهجم عليه)
-    public IEnumerator GetPlayersList(System.Action<string> onCallback)
+    // 2. دالة جلب لستة اللاعبين الآخرين (عشان تظهر في قائمة الهجوم)
+    public IEnumerator GetPlayerslist(System.Action<string> onCallback)
     {
-        string url = serverUrl + "/api/players-list";
+        string url = ServerConfig.baseURI + "/api/players-list";
 
         using (UnityWebRequest request = UnityWebRequest.Get(url))
         {
@@ -52,7 +51,7 @@ public class NetworkManager : MonoBehaviour
             if (request.result == UnityWebRequest.Result.Success)
             {
                 string jsonResponse = request.downloadHandler.text;
-                onCallback?.Invoke(jsonResponse); // رجعنا اللستة عشان نعرضها في اللعبة
+                onCallback?.Invoke(jsonResponse); // رجعنا اللستة عشان تعرصها في اللعبة
             }
             else
             {
