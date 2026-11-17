@@ -1,0 +1,26 @@
+using System.Collections;
+using UnityEngine;
+
+public class GameInitializer : MonoBehaviour
+{
+    public NetworkManager networkManager;
+
+    void Start()
+    {
+        // بيانات تجريبية مؤقتة لقريتك (تقدر تغيرها بالأسماء الحقيقية للملفات لاحقاً)
+        string myPlayerId = "player_" + Random.Range(1000, 9999); // رقم تعريفي مؤقت فريد
+        string myPlayerName = "HeroVillage"; // اسم قريتك
+        int myLevel = 1;                     // مستوى قريتك
+        string sampleVillageData = "DefaultLayout"; // داتا مبدئية عن شكل المباني
+
+        // التأكد من وجود NetworkManager والاستدعاء
+        if (networkManager != null)
+        {
+            StartCoroutine(networkManager.SaveVillageToServer(myPlayerId, myPlayerName, myLevel, sampleVillageData));
+        }
+        else
+        {
+            Debug.LogError("NetworkManager reference is missing!");
+        }
+    }
+}
